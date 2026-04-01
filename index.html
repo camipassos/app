@@ -604,15 +604,60 @@ select{appearance:none;-webkit-appearance:none}
 <script>
 'use strict';
 
-/* ─────────── DB ─────────── */
+/* ─────────── SUPABASE CONFIG ─────────── */
+var SB_URL  = 'https://defjvzjjimyakcwrevvp.supabase.co';
+var SB_KEY  = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRlZmp2empqaW15YWtjd3JldnZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUwNzE1NzEsImV4cCI6MjA5MDY0NzU3MX0.pmgFzQgBQqZuwT77vRUCv8EEsq2bFx5C3FD3_fHit1M';
+var USER_ID = 'cami';
+
+function sbH(){
+  return {
+    'Content-Type':'application/json',
+    'apikey': SB_KEY,
+    'Authorization':'Bearer '+SB_KEY,
+    'Prefer':'resolution=merge-duplicates'
+  };
+}
+
+/* ─────────── DB (local cache + cloud) ─────────── */
 var DB = (function(){
-  try{ return JSON.parse(localStorage.getItem('camiDB2') || 'null') || {t:{},d:{}}; }
+  try{ return JSON.parse(localStorage.getItem('camiDB2')||'null')||{t:{},d:{}}; }
   catch(e){ return {t:{},d:{}}; }
 })();
 
 function saveDB(){
   try{ localStorage.setItem('camiDB2', JSON.stringify(DB)); }
-  catch(e){ showToast('Erro: armazenamento cheio'); }
+  catch(e){}
+}
+
+function pushTreino(k){
+  fetch(SB_URL+'/rest/v1/treino?on_conflict=user_id,day_key',{
+    method:'POST', headers:sbH(),
+    body:JSON.stringify({user_id:USER_ID, day_key:k, data:DB.t[k]||{ex:[]}, updated_at:new Date().toISOString()})
+  }).catch(function(){});
+}
+
+function pushDieta(k){
+  fetch(SB_URL+'/rest/v1/dieta?on_conflict=user_id,day_key',{
+    method:'POST', headers:sbH(),
+    body:JSON.stringify({user_id:USER_ID, day_key:k, data:DB.d[k]||{}, updated_at:new Date().toISOString()})
+  }).catch(function(){});
+}
+
+function pullFromCloud(cb){
+  var done=0;
+  function tick(){ if(++done===2) cb(); }
+  fetch(SB_URL+'/rest/v1/treino?user_id=eq.'+USER_ID+'&select=day_key,data',{
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+  }).then(function(r){return r.json();}).then(function(rows){
+    if(Array.isArray(rows)) rows.forEach(function(r){ DB.t[r.day_key]=r.data; });
+    saveDB();
+  }).catch(function(){}).then(tick);
+  fetch(SB_URL+'/rest/v1/dieta?user_id=eq.'+USER_ID+'&select=day_key,data',{
+    headers:{'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY}
+  }).then(function(r){return r.json();}).then(function(rows){
+    if(Array.isArray(rows)) rows.forEach(function(r){ DB.d[r.day_key]=r.data; });
+    saveDB();
+  }).catch(function(){}).then(tick);
 }
 
 /* ─────────── CONSTANTS ─────────── */
@@ -635,6 +680,14 @@ window.addEventListener('DOMContentLoaded', function(){
   buildScroller();
   renderEx();
   renderDieta();
+  /* pull cloud data then refresh UI */
+  pullFromCloud(function(){
+    curWk = weekNum(curDay);
+    setHeader();
+    buildScroller();
+    renderEx();
+    renderDieta();
+  });
 });
 
 /* ─────────── DATE UTILS ─────────── */
@@ -1046,8 +1099,8 @@ function clrSumm(){
 function fabSave(){
   try{
     if(curTab==='treino'){
-      /* treino already auto-persisted; just confirm to user */
       saveDB();
+      pushTreino(curDay);
       buildScroller();
       showToast('Treino salvo');
     } else {
@@ -1060,6 +1113,7 @@ function fabSave(){
         wt: document.getElementById('inWt').value   || ''
       };
       saveDB();
+      pushDieta(k);
       renderSumm();
       if(curSub==='evol') renderWtChart();
       showToast('Dieta salva');
@@ -1069,7 +1123,7 @@ function fabSave(){
   }
 }
 
-/* auto-save treino on any input change */
+/* auto-save treino on any input change (local only — push on Salvar) */
 document.getElementById('view-treino').addEventListener('input', function(){ saveDB(); });
 
 /* ─────────── TOAST ─────────── */
