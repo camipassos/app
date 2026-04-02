@@ -695,30 +695,33 @@ function today(){ return dateStr(0); }
 function dateStr(off){
   var d = new Date();
   d.setDate(d.getDate() + (off|0));
-  return d.toISOString().slice(0,10);
+  /* usa fuso local para evitar desfasagem com UTC */
+  var y = d.getFullYear();
+  var m = String(d.getMonth()+1).padStart(2,'0');
+  var day = String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
 }
 /* week numbering: sequential from the Monday of the earliest recorded day.
    Week 1 = the week of the first ever entry (or this week if no data). */
 function firstMonday(){
   var keys = Object.keys(DB.t).concat(Object.keys(DB.d||{})).sort();
   var base  = keys.length ? keys[0] : today();
-  var d     = new Date(base);
+  var d     = new Date(base+'T12:00:00');
   var dow   = d.getDay() || 7;        /* 1=Mon */
   d.setDate(d.getDate() - (dow - 1)); /* go to Monday */
-  d.setHours(0,0,0,0);
+  d.setHours(12,0,0,0);
   return d;
 }
 function weekNum(iso){
-  var d   = new Date(iso);
-  d.setHours(0,0,0,0);
+  var d   = new Date(iso+'T12:00:00');
   var fm  = firstMonday();
   var diff= Math.floor((d - fm) / (7*864e5));
   return Math.max(1, diff + 1);
 }
 function addD(iso, n){
-  var d = new Date(iso);
+  var d = new Date(iso+'T12:00:00');
   d.setDate(d.getDate() + n);
-  return d.toISOString().slice(0,10);
+  return localKey(d);
 }
 function fmtN(n){ return Number(n).toLocaleString('pt-BR'); }
 function esc(s){
@@ -788,15 +791,22 @@ function gotoSub(s){
 }
 
 /* ─────────── DAY SCROLLER ─────────── */
+function localKey(d){
+  var y = d.getFullYear();
+  var m = String(d.getMonth()+1).padStart(2,'0');
+  var day = String(d.getDate()).padStart(2,'0');
+  return y+'-'+m+'-'+day;
+}
+
 function buildScroller(){
   var sc = document.getElementById('dayScroller');
   sc.innerHTML = '';
-  var td = today(), base = new Date(td);
+  var td = today(), base = new Date(td+'T12:00:00');
   var dow = base.getDay() || 7;          /* 1=Mon */
   base.setDate(base.getDate() - (dow-1));/* Monday */
   for(var i=0;i<7;i++){
     var d = new Date(base); d.setDate(base.getDate()+i);
-    var k = d.toISOString().slice(0,10);
+    var k = localKey(d);
     var p = document.createElement('div');
     p.className = 'dpill'
       + (k===td      ? ' today'    : '')
