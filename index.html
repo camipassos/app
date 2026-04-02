@@ -131,6 +131,7 @@
     overflow: hidden;
     cursor: pointer;
     transition: border-color 0.15s;
+    min-height: calc((100dvh - 130px) / 3.2);
   }
 
   .scroll-day:active { border-color: var(--text-muted); }
@@ -592,8 +593,13 @@
   function renderScroll() {
     const container = document.getElementById('scrollView');
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+
+    // Determine start day: if viewing current month, start from today; otherwise day 1
+    const isCurrentMonth = currentYear === today.getFullYear() && currentMonth === today.getMonth();
+    const startDay = isCurrentMonth ? today.getDate() : 1;
+
     let html = '';
-    for (let d = 1; d <= daysInMonth; d++) {
+    for (let d = startDay; d <= daysInMonth; d++) {
       const key = toKey(currentYear, currentMonth, d);
       const dayEntries = entries[key] || [];
       const dow = new Date(currentYear, currentMonth, d).getDay();
@@ -606,7 +612,7 @@
       html += `</div>`;
       if (hasE) {
         html += `<div class="scroll-day-entries">`;
-        dayEntries.forEach((e, i) => {
+        dayEntries.forEach((e) => {
           html += `<div class="entry-pill">`;
           if (e.time) html += `<span class="entry-time">${e.time}</span>`;
           html += `<span class="entry-text">${escHtml(e.text)}</span>`;
