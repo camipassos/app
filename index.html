@@ -494,6 +494,7 @@
   <button class="tab active" data-tab="scroll">Agenda</button>
   <button class="tab" data-tab="grid">Mês</button>
 </div>
+<div id="loadingBar" style="height:2px;background:var(--text);opacity:0;transition:opacity 0.2s;margin:0;"></div>
 
 <div class="content">
   <div id="scrollView" class="scroll-view"></div>
@@ -523,24 +524,28 @@
 </div>
 
 <script>
+  // ---- SUPABASE CONFIG ----
+  const SUPABASE_URL = 'https://gkxpotnhfwowyqesqvxa.supabase.co';
+  const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdreHBvdG5oZndvd3lxZXNxdnhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNTc5MTEsImV4cCI6MjA5MDczMzkxMX0.7Ahxax54XakWviCiT2fBgKyuhskP3qTLc2lsOQNEGoE';
+
+  const api = (path, opts = {}) => fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
+    headers: {
+      'apikey': SUPABASE_KEY,
+      'Authorization': `Bearer ${SUPABASE_KEY}`,
+      'Content-Type': 'application/json',
+      'Prefer': opts.prefer || 'return=representation',
+      ...opts.headers
+    },
+    ...opts
+  });
+
   // ---- STATE ----
   const today = new Date();
   let currentYear = today.getFullYear();
   let currentMonth = today.getMonth();
-  let selectedDate = null; // "YYYY-MM-DD"
-
-  // entries: { "YYYY-MM-DD": [{time, text}, ...] }
-  let entries = {};
-
-  // Load from localStorage
-  try {
-    const saved = localStorage.getItem('cal_entries');
-    if (saved) entries = JSON.parse(saved);
-  } catch(e) {}
-
-  function saveEntries() {
-    try { localStorage.setItem('cal_entries', JSON.stringify(entries)); } catch(e) {}
-  }
+  let selectedDate = null;
+  let entries = {}; // { "YYYY-MM-DD": [{id, time, text}, ...] }
+  let loading = false;
 
   const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
   const DAYS_PT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
@@ -549,9 +554,60 @@
   function toKey(y, m, d) {
     return `${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
   }
-
   function isToday(y, m, d) {
     return y === today.getFullYear() && m === today.getMonth() && d === today.getDate();
+  }
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  // ---- SUPABASE CRUD ----
+  async function loadMonth(year, month) {
+    const from = toKey(year, month, 1);
+    const to   = toKey(year, month, new Date(year, month + 1, 0).getDate());
+    showLoading(true);
+    try {
+      const res = await api(`events?date=gte.${from}&date=lte.${to}&order=time.asc.nullslast,created_at.asc`);
+      const rows = await res.json();
+      // rebuild entries map for this month
+      Object.keys(entries).forEach(k => { if (k >= from && k <= to) delete entries[k]; });
+      rows.forEach(row => {
+        if (!entries[row.date]) entries[row.date] = [];
+        entries[row.date].push({ id: row.id, time: row.time || '', text: row.text });
+      });
+    } catch(e) { console.error(e); }
+    showLoading(false);
+    render();
+  }
+
+  async function addEntryDB(date, time, text) {
+    const res = await api('events', {
+      method: 'POST',
+      body: JSON.stringify({ date, time: time || null, text }),
+      prefer: 'return=representation'
+    });
+    const rows = await res.json();
+    const row = rows[0];
+    if (!entries[date]) entries[date] = [];
+    entries[date].push({ id: row.id, time: row.time || '', text: row.text });
+    entries[date].sort((a, b) => {
+      if (!a.time && !b.time) return 0;
+      if (!a.time) return 1;
+      if (!b.time) return -1;
+      return a.time.localeCompare(b.time);
+    });
+  }
+
+  async function deleteEntryDB(id, date, idx) {
+    await api(`events?id=eq.${id}`, { method: 'DELETE', prefer: 'return=minimal' });
+    entries[date].splice(idx, 1);
+    if (entries[date].length === 0) delete entries[date];
+  }
+
+  // ---- LOADING STATE ----
+  function showLoading(on) {
+    loading = on;
+    document.getElementById('loadingBar').style.opacity = on ? '1' : '0';
   }
 
   // ---- HEADER ----
@@ -575,12 +631,14 @@
   document.getElementById('prevBtn').addEventListener('click', () => {
     currentMonth--;
     if (currentMonth < 0) { currentMonth = 11; currentYear--; }
-    updateHeader(); render();
+    updateHeader();
+    loadMonth(currentYear, currentMonth);
   });
   document.getElementById('nextBtn').addEventListener('click', () => {
     currentMonth++;
     if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-    updateHeader(); render();
+    updateHeader();
+    loadMonth(currentYear, currentMonth);
   });
 
   // ---- RENDER ----
@@ -593,11 +651,8 @@
   function renderScroll() {
     const container = document.getElementById('scrollView');
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-
-    // Determine start day: if viewing current month, start from today; otherwise day 1
     const isCurrentMonth = currentYear === today.getFullYear() && currentMonth === today.getMonth();
     const startDay = isCurrentMonth ? today.getDate() : 1;
-
     let html = '';
     for (let d = startDay; d <= daysInMonth; d++) {
       const key = toKey(currentYear, currentMonth, d);
@@ -605,14 +660,14 @@
       const dow = new Date(currentYear, currentMonth, d).getDay();
       const isT = isToday(currentYear, currentMonth, d);
       const hasE = dayEntries.length > 0;
-      html += `<div class="scroll-day${isT?' today':''}${hasE?' has-entry':''}" data-key="${key}" data-d="${d}">`;
+      html += `<div class="scroll-day${isT?' today':''}${hasE?' has-entry':''}" data-key="${key}">`;
       html += `<div class="scroll-day-header">`;
       html += `<span class="scroll-day-num">${d}</span>`;
       html += `<span class="scroll-day-name">${DAYS_FULL[dow]}</span>`;
       html += `</div>`;
       if (hasE) {
         html += `<div class="scroll-day-entries">`;
-        dayEntries.forEach((e) => {
+        dayEntries.forEach(e => {
           html += `<div class="entry-pill">`;
           if (e.time) html += `<span class="entry-time">${e.time}</span>`;
           html += `<span class="entry-text">${escHtml(e.text)}</span>`;
@@ -633,30 +688,23 @@
     const firstDay = new Date(currentYear, currentMonth, 1).getDay();
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
     const prevDays = new Date(currentYear, currentMonth, 0).getDate();
-
     let html = '<div class="weekdays">';
     DAYS_PT.forEach(d => { html += `<div class="weekday-label">${d}</div>`; });
     html += '</div><div class="grid-days">';
-
-    // prev month padding
     for (let i = firstDay - 1; i >= 0; i--) {
       const d = prevDays - i;
       const pm = currentMonth - 1 < 0 ? 11 : currentMonth - 1;
       const py = currentMonth - 1 < 0 ? currentYear - 1 : currentYear;
       const key = toKey(py, pm, d);
       const hasE = (entries[key]||[]).length > 0;
-      html += `<div class="grid-day other-month${hasE?' has-entry':''}" data-key="${key}">`;
-      html += `<span class="grid-day-num">${d}</span><div class="grid-dot"></div></div>`;
+      html += `<div class="grid-day other-month${hasE?' has-entry':''}" data-key="${key}"><span class="grid-day-num">${d}</span><div class="grid-dot"></div></div>`;
     }
-
     for (let d = 1; d <= daysInMonth; d++) {
       const key = toKey(currentYear, currentMonth, d);
       const isT = isToday(currentYear, currentMonth, d);
       const hasE = (entries[key]||[]).length > 0;
-      html += `<div class="grid-day${isT?' today':''}${hasE?' has-entry':''}" data-key="${key}">`;
-      html += `<span class="grid-day-num">${d}</span><div class="grid-dot"></div></div>`;
+      html += `<div class="grid-day${isT?' today':''}${hasE?' has-entry':''}" data-key="${key}"><span class="grid-day-num">${d}</span><div class="grid-dot"></div></div>`;
     }
-
     const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
     let nextD = 1;
     for (let i = firstDay + daysInMonth; i < totalCells; i++) {
@@ -664,17 +712,13 @@
       const ny = currentMonth + 1 > 11 ? currentYear + 1 : currentYear;
       const key = toKey(ny, nm, nextD);
       const hasE = (entries[key]||[]).length > 0;
-      html += `<div class="grid-day other-month${hasE?' has-entry':''}" data-key="${key}">`;
-      html += `<span class="grid-day-num">${nextD}</span><div class="grid-dot"></div></div>`;
+      html += `<div class="grid-day other-month${hasE?' has-entry':''}" data-key="${key}"><span class="grid-day-num">${nextD}</span><div class="grid-dot"></div></div>`;
       nextD++;
     }
-
     html += '</div>';
     container.innerHTML = html;
     container.querySelectorAll('.grid-day').forEach(el => {
-      el.addEventListener('click', () => {
-        openModal(el.dataset.key);
-      });
+      el.addEventListener('click', () => openModal(el.dataset.key));
     });
   }
 
@@ -682,12 +726,9 @@
   function openModal(key) {
     selectedDate = key;
     const [y, m, d] = key.split('-').map(Number);
-    const dateObj = new Date(y, m - 1, d);
-    const dow = dateObj.getDay();
-
+    const dow = new Date(y, m - 1, d).getDay();
     document.getElementById('modalDateBig').textContent = `${d} de ${MONTHS_PT[m-1]}`;
     document.getElementById('modalDateSub').textContent = `${DAYS_FULL[dow]}, ${y}`;
-
     renderModalEntries();
     document.getElementById('inputTime').value = '';
     document.getElementById('inputText').value = '';
@@ -699,27 +740,23 @@
     const key = selectedDate;
     const dayEntries = entries[key] || [];
     const sec = document.getElementById('modalEntriesSection');
-    if (dayEntries.length === 0) {
-      sec.innerHTML = '';
-      return;
-    }
+    if (dayEntries.length === 0) { sec.innerHTML = ''; return; }
     let html = '<div class="modal-section-label">Eventos</div><div class="modal-entries">';
     dayEntries.forEach((e, i) => {
       html += `<div class="modal-entry-item">`;
       if (e.time) html += `<span class="modal-entry-time">${e.time}</span>`;
       html += `<span class="modal-entry-text">${escHtml(e.text)}</span>`;
-      html += `<button class="modal-entry-del" data-idx="${i}">&#x2715;</button>`;
+      html += `<button class="modal-entry-del" data-id="${e.id}" data-idx="${i}">&#x2715;</button>`;
       html += `</div>`;
     });
     html += '</div>';
     sec.innerHTML = html;
     sec.querySelectorAll('.modal-entry-del').forEach(btn => {
-      btn.addEventListener('click', (ev) => {
+      btn.addEventListener('click', async (ev) => {
         ev.stopPropagation();
-        const idx = parseInt(btn.dataset.idx);
-        entries[selectedDate].splice(idx, 1);
-        if (entries[selectedDate].length === 0) delete entries[selectedDate];
-        saveEntries();
+        btn.disabled = true;
+        btn.style.opacity = '0.3';
+        await deleteEntryDB(btn.dataset.id, selectedDate, parseInt(btn.dataset.idx));
         renderModalEntries();
         render();
       });
@@ -736,49 +773,38 @@
     if (e.target === document.getElementById('modalOverlay')) closeModal();
   });
 
-  document.getElementById('addBtn').addEventListener('click', addEntry);
+  document.getElementById('addBtn').addEventListener('click', doAdd);
   document.getElementById('inputText').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); addEntry(); }
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doAdd(); }
   });
 
-  function addEntry() {
+  async function doAdd() {
     const time = document.getElementById('inputTime').value.trim();
     const text = document.getElementById('inputText').value.trim();
     if (!text) return;
-    if (!entries[selectedDate]) entries[selectedDate] = [];
-    entries[selectedDate].push({ time, text });
-    // sort by time
-    entries[selectedDate].sort((a, b) => {
-      if (!a.time && !b.time) return 0;
-      if (!a.time) return 1;
-      if (!b.time) return -1;
-      return a.time.localeCompare(b.time);
-    });
-    saveEntries();
-    renderModalEntries();
-    render();
-    document.getElementById('inputTime').value = '';
-    document.getElementById('inputText').value = '';
-    document.getElementById('inputText').focus();
+    const btn = document.getElementById('addBtn');
+    btn.disabled = true;
+    btn.textContent = '...';
+    try {
+      await addEntryDB(selectedDate, time, text);
+      renderModalEntries();
+      render();
+      document.getElementById('inputTime').value = '';
+      document.getElementById('inputText').value = '';
+      document.getElementById('inputText').focus();
+    } catch(e) { alert('Erro ao salvar. Tente novamente.'); }
+    btn.disabled = false;
+    btn.textContent = 'Adicionar';
   }
 
-  // ---- UTILS ----
-  function escHtml(s) {
-    return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
-  }
+  // ---- REALTIME (polling a cada 15s) ----
+  setInterval(() => {
+    loadMonth(currentYear, currentMonth);
+  }, 15000);
 
   // ---- INIT ----
   updateHeader();
-  render();
-
-  // Auto-scroll to today in scroll view
-  setTimeout(() => {
-    const activeTab = document.querySelector('.tab.active').dataset.tab;
-    if (activeTab === 'scroll') {
-      const todayEl = document.querySelector('.scroll-day.today');
-      if (todayEl) todayEl.scrollIntoView({ block: 'start', behavior: 'smooth' });
-    }
-  }, 100);
+  loadMonth(currentYear, currentMonth);
 </script>
 </body>
 </html>
