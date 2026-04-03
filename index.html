@@ -8,22 +8,22 @@
   @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500&family=DM+Mono:wght@400;500&display=swap');
 
   :root {
-    --bg: #ffffff;
-    --surface: #f7f7f6;
-    --border: #e8e8e6;
-    --text: #1a1a18;
-    --text-muted: #9b9b96;
-    --accent: #1a1a18;
-    --accent-light: #f0f0ee;
-    --today: #1a1a18;
-    --today-text: #ffffff;
-    --entry-dot: #1a1a18;
-    --tab-active: #1a1a18;
-    --tab-inactive: #9b9b96;
-    --modal-bg: rgba(0,0,0,0.18);
-    --radius: 10px;
-    --font: 'DM Sans', sans-serif;
-    --mono: 'DM Mono', monospace;
+    --bg:          #1e2023;
+    --surface:     #272b2f;
+    --surface2:    #2e3338;
+    --border:      #353a3f;
+    --border-soft: #2c3136;
+    --text:        #d4d8dc;
+    --text-muted:  #6b7280;
+    --text-faint:  #3d454e;
+    --accent:      #d4d8dc;
+    --today-bg:    #d4d8dc;
+    --today-text:  #1e2023;
+    --tab-active:  #d4d8dc;
+    --tab-inactive:#6b7280;
+    --radius:      11px;
+    --font:        'DM Sans', sans-serif;
+    --mono:        'DM Mono', monospace;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
@@ -41,439 +41,298 @@
 
   /* HEADER */
   .header {
-    padding: 20px 20px 0;
+    padding: 22px 20px 0;
     display: flex;
     align-items: center;
     justify-content: space-between;
   }
-
   .header-title {
-    font-size: 13px;
+    font-size: 11px;
     font-weight: 500;
-    letter-spacing: 0.08em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
     color: var(--text-muted);
     font-family: var(--mono);
   }
-
   .header-month {
-    font-size: 18px;
-    font-weight: 400;
+    font-size: 19px;
+    font-weight: 300;
     color: var(--text);
     letter-spacing: -0.02em;
+    margin-top: 2px;
   }
-
-  .nav-btns {
-    display: flex;
-    gap: 4px;
-  }
-
+  .nav-btns { display: flex; gap: 5px; }
   .nav-btn {
     background: none;
     border: 1px solid var(--border);
-    border-radius: 6px;
-    width: 30px;
-    height: 30px;
+    border-radius: 7px;
+    width: 32px; height: 32px;
     cursor: pointer;
-    color: var(--text);
-    font-size: 14px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: background 0.15s;
+    color: var(--text-muted);
+    font-size: 15px;
+    display: flex; align-items: center; justify-content: center;
+    transition: border-color 0.15s, color 0.15s;
   }
-  .nav-btn:active { background: var(--accent-light); }
+  .nav-btn:active { border-color: var(--text-muted); color: var(--text); }
 
   /* TABS */
   .tabs {
     display: flex;
-    padding: 16px 20px 0;
-    gap: 20px;
-    border-bottom: 1px solid var(--border);
+    padding: 18px 20px 0;
+    gap: 22px;
+    border-bottom: 1px solid var(--border-soft);
     margin-top: 4px;
   }
-
   .tab {
     font-size: 13px;
     font-weight: 400;
     color: var(--tab-inactive);
-    padding-bottom: 10px;
+    padding-bottom: 11px;
     cursor: pointer;
     border-bottom: 1.5px solid transparent;
     transition: color 0.15s, border-color 0.15s;
-    letter-spacing: 0.01em;
     background: none;
-    border-top: none;
-    border-left: none;
-    border-right: none;
+    border-top: none; border-left: none; border-right: none;
+    letter-spacing: 0.01em;
   }
-
   .tab.active {
     color: var(--tab-active);
     border-bottom-color: var(--tab-active);
     font-weight: 500;
   }
 
-  /* CONTENT */
+  #loadingBar {
+    height: 1.5px;
+    background: var(--text-muted);
+    opacity: 0;
+    transition: opacity 0.2s;
+  }
+
   .content {
     flex: 1;
     overflow-y: auto;
     -webkit-overflow-scrolling: touch;
   }
 
-  /* === TAB 1: SCROLL DAYS === */
-  .scroll-view { padding: 8px 20px 100px; }
+  /* =====================
+     TAB 1 — AGENDA
+  ===================== */
+  .scroll-view { padding: 10px 16px 100px; }
 
-  .scroll-day {
-    border: 1px solid var(--border);
+  .day-block {
+    border: 1px solid var(--border-soft);
     border-radius: var(--radius);
     margin-bottom: 10px;
-    overflow: hidden;
-    cursor: pointer;
-    transition: border-color 0.15s;
-    min-height: calc((100dvh - 130px) / 3.2);
+    display: flex;
+    flex-direction: column;
+    transition: border-color 0.2s;
+    min-height: calc((100dvh - 136px) / 3.1);
   }
+  .day-block.today  { border-color: var(--border); }
+  .day-block.focused { border-color: #45505c; }
 
-  .scroll-day:active { border-color: var(--text-muted); }
-  .scroll-day.has-entry { border-color: var(--text); }
-
-  .scroll-day-header {
-    padding: 12px 14px 10px;
+  .day-block-header {
+    padding: 12px 14px 8px;
     display: flex;
     align-items: baseline;
-    gap: 8px;
+    gap: 9px;
+    flex-shrink: 0;
     user-select: none;
   }
-
-  .scroll-day-num {
-    font-size: 22px;
+  .day-num {
+    font-size: 21px;
     font-weight: 300;
     letter-spacing: -0.03em;
     line-height: 1;
+    color: var(--text);
   }
-
-  .scroll-day-name {
-    font-size: 12px;
+  .day-name {
+    font-size: 11px;
     color: var(--text-muted);
     font-family: var(--mono);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
+    letter-spacing: 0.06em;
   }
-
-  .scroll-day.today .scroll-day-num {
-    background: var(--today);
+  .day-block.today .day-num {
+    background: var(--today-bg);
     color: var(--today-text);
     border-radius: 5px;
-    padding: 2px 7px;
-    font-size: 18px;
+    padding: 2px 8px;
+    font-size: 17px;
   }
 
-  .scroll-day-entries {
-    padding: 0 14px 12px;
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-  }
-
-  .entry-pill {
-    background: var(--surface);
-    border-radius: 5px;
-    padding: 6px 10px;
-    font-size: 12.5px;
-    color: var(--text);
-    display: flex;
-    align-items: center;
-    gap: 7px;
-    line-height: 1.3;
-  }
-
-  .entry-pill .entry-time {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text-muted);
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  .entry-pill .entry-text {
+  .day-textarea {
     flex: 1;
-    word-break: break-word;
+    width: 100%;
+    background: transparent;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: var(--font);
+    font-size: 13.5px;
+    line-height: 1.65;
+    color: var(--text);
+    padding: 0 14px 12px;
+    min-height: 56px;
+    caret-color: var(--text);
+    -webkit-appearance: none;
+    overflow: hidden;
+  }
+  .day-textarea::placeholder { color: var(--text-faint); font-weight: 300; }
+
+  .day-saving {
+    font-size: 10px;
+    font-family: var(--mono);
+    color: var(--text-faint);
+    padding: 0 14px 8px;
+    text-align: right;
+    flex-shrink: 0;
+    min-height: 18px;
   }
 
-  .scroll-day-empty {
-    font-size: 12px;
-    color: var(--text-muted);
-    padding-bottom: 12px;
-  }
-
-  /* === TAB 2: GRID CALENDAR === */
-  .grid-view { padding: 12px 20px 100px; }
+  /* =====================
+     TAB 2 — GRID
+  ===================== */
+  .grid-view { padding: 14px 16px 100px; }
 
   .weekdays {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    margin-bottom: 4px;
+    margin-bottom: 5px;
   }
-
   .weekday-label {
     text-align: center;
     font-size: 10px;
     font-family: var(--mono);
-    color: var(--text-muted);
-    letter-spacing: 0.06em;
+    color: var(--text-faint);
+    letter-spacing: 0.07em;
     text-transform: uppercase;
     padding: 4px 0;
   }
-
   .grid-days {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
     gap: 3px;
   }
-
   .grid-day {
     aspect-ratio: 1;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    border-radius: 7px;
+    border-radius: 8px;
     cursor: pointer;
-    position: relative;
     transition: background 0.12s;
     user-select: none;
   }
-
-  .grid-day:active { background: var(--accent-light); }
-
+  .grid-day:active { background: var(--surface2); }
   .grid-day-num {
     font-size: 13px;
     font-weight: 400;
     letter-spacing: -0.01em;
     line-height: 1;
+    color: var(--text);
   }
-
-  .grid-day.today {
-    background: var(--today);
-  }
+  .grid-day.today { background: var(--today-bg); }
   .grid-day.today .grid-day-num { color: var(--today-text); }
+  .grid-day.other-month .grid-day-num { color: var(--text-faint); }
+  .grid-dot { width: 3px; height: 3px; margin-top: 4px; border-radius: 50%; }
+  .grid-day.has-entry .grid-dot { background: var(--text-muted); }
+  .grid-day.today.has-entry .grid-dot { background: var(--today-text); opacity: 0.5; }
 
-  .grid-day.other-month .grid-day-num { color: var(--border); }
-
-  .grid-day.has-entry .grid-dot {
-    width: 3px;
-    height: 3px;
-    background: var(--entry-dot);
-    border-radius: 50%;
-    margin-top: 3px;
-  }
-  .grid-day.today.has-entry .grid-dot { background: var(--today-text); }
-  .grid-dot { width: 3px; height: 3px; margin-top: 3px; }
-
-  /* === MODAL === */
+  /* =====================
+     MODAL (grid only)
+  ===================== */
   .modal-overlay {
     display: none;
-    position: fixed;
-    inset: 0;
-    background: var(--modal-bg);
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.5);
     z-index: 100;
     align-items: flex-end;
     justify-content: center;
-    backdrop-filter: blur(2px);
+    backdrop-filter: blur(3px);
   }
-
   .modal-overlay.open { display: flex; }
 
   .modal {
-    background: var(--bg);
+    background: var(--surface);
     border-radius: 16px 16px 0 0;
-    width: 100%;
-    max-width: 480px;
-    padding: 0 0 40px;
-    max-height: 88dvh;
+    width: 100%; max-width: 480px;
+    padding: 0 0 44px;
+    max-height: 72dvh;
     overflow-y: auto;
     animation: slideUp 0.22s cubic-bezier(.22,.7,.36,1);
+    border-top: 1px solid var(--border);
   }
-
   @keyframes slideUp {
-    from { transform: translateY(100%); opacity: 0.5; }
-    to { transform: translateY(0); opacity: 1; }
+    from { transform: translateY(100%); opacity: 0.4; }
+    to   { transform: translateY(0);    opacity: 1;   }
   }
-
   .modal-handle {
-    width: 36px;
-    height: 4px;
+    width: 34px; height: 3px;
     background: var(--border);
     border-radius: 2px;
-    margin: 10px auto 0;
+    margin: 12px auto 0;
   }
-
   .modal-header {
-    padding: 16px 20px 12px;
-    display: flex;
-    align-items: baseline;
-    gap: 8px;
-    border-bottom: 1px solid var(--border);
+    padding: 16px 20px 14px;
+    display: flex; align-items: baseline; gap: 9px;
+    border-bottom: 1px solid var(--border-soft);
   }
-
   .modal-date-big {
-    font-size: 20px;
-    font-weight: 300;
-    letter-spacing: -0.03em;
+    font-size: 19px; font-weight: 300;
+    letter-spacing: -0.03em; color: var(--text);
   }
-
   .modal-date-sub {
-    font-size: 12px;
-    color: var(--text-muted);
+    font-size: 11px; color: var(--text-muted);
     font-family: var(--mono);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    text-transform: uppercase; letter-spacing: 0.05em;
   }
-
   .modal-close {
-    margin-left: auto;
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--text-muted);
-    font-size: 18px;
-    line-height: 1;
-    padding: 4px;
+    margin-left: auto; background: none; border: none;
+    cursor: pointer; color: var(--text-muted);
+    font-size: 17px; padding: 4px; line-height: 1;
   }
-
-  /* Entry list in modal */
-  .modal-entries {
-    padding: 12px 20px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 8px;
+  .modal-notepad { padding: 16px 20px 0; }
+  .modal-notepad-label {
+    font-size: 10px; font-family: var(--mono);
+    color: var(--text-muted); text-transform: uppercase;
+    letter-spacing: 0.07em; margin-bottom: 10px;
   }
-
-  .modal-entry-item {
-    background: var(--surface);
-    border-radius: 8px;
-    padding: 10px 12px;
-    display: flex;
-    align-items: flex-start;
-    gap: 10px;
-  }
-
-  .modal-entry-time {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--text-muted);
-    padding-top: 1px;
-    white-space: nowrap;
-    flex-shrink: 0;
-  }
-
-  .modal-entry-text {
-    font-size: 13px;
-    line-height: 1.4;
-    flex: 1;
-    word-break: break-word;
-  }
-
-  .modal-entry-del {
-    background: none;
-    border: none;
-    cursor: pointer;
-    color: var(--border);
-    font-size: 14px;
-    padding: 0 0 0 6px;
-    flex-shrink: 0;
-    transition: color 0.12s;
-  }
-  .modal-entry-del:active { color: #c0392b; }
-
-  /* New entry form */
-  .modal-form {
-    padding: 14px 20px 0;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-  }
-
-  .modal-form label {
-    font-size: 10px;
-    font-family: var(--mono);
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
-    display: block;
-    margin-bottom: 4px;
-  }
-
-  .modal-input-group {
-    display: flex;
-    gap: 8px;
-  }
-
-  .modal-time-input {
-    font-family: var(--mono);
-    font-size: 13px;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    padding: 9px 10px;
-    background: var(--bg);
-    color: var(--text);
-    width: 110px;
-    outline: none;
-    transition: border-color 0.15s;
-    flex-shrink: 0;
-  }
-  .modal-time-input:focus { border-color: var(--text); }
-
-  .modal-text-input {
+  .modal-textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border-soft);
+    border-radius: 9px;
+    outline: none; resize: none;
     font-family: var(--font);
-    font-size: 13px;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    padding: 9px 12px;
-    background: var(--bg);
+    font-size: 13.5px; line-height: 1.65;
     color: var(--text);
-    flex: 1;
-    outline: none;
+    padding: 12px 14px;
+    min-height: 130px;
+    caret-color: var(--text);
+    -webkit-appearance: none;
     transition: border-color 0.15s;
-    resize: none;
-    min-height: 38px;
-    max-height: 120px;
-    line-height: 1.4;
   }
-  .modal-text-input:focus { border-color: var(--text); }
-
-  .modal-add-btn {
-    font-family: var(--font);
-    font-size: 13px;
-    font-weight: 500;
-    background: var(--accent);
-    color: #fff;
-    border: none;
-    border-radius: 7px;
-    padding: 10px 20px;
-    cursor: pointer;
-    align-self: flex-end;
-    transition: opacity 0.12s;
-  }
-  .modal-add-btn:active { opacity: 0.75; }
-
-  /* separator */
-  .modal-sep {
-    height: 1px;
-    background: var(--border);
-    margin: 12px 20px 0;
-  }
-
-  .modal-section-label {
-    font-size: 10px;
-    font-family: var(--mono);
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: 0.07em;
+  .modal-textarea:focus { border-color: #45505c; }
+  .modal-textarea::placeholder { color: var(--text-faint); }
+  .modal-save-row {
     padding: 12px 20px 0;
+    display: flex; align-items: center;
   }
+  .modal-saving-hint {
+    font-size: 11px; font-family: var(--mono);
+    color: var(--text-faint); margin-right: auto;
+  }
+  .modal-save-btn {
+    font-family: var(--font); font-size: 13px; font-weight: 500;
+    background: var(--today-bg); color: var(--today-text);
+    border: none; border-radius: 8px;
+    padding: 10px 22px; cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .modal-save-btn:active { opacity: 0.7; }
 
-  /* hidden */
   .hidden { display: none !important; }
 </style>
 </head>
@@ -481,7 +340,7 @@
 
 <div class="header">
   <div>
-    <div class="header-title" id="headerTitle">Calendário</div>
+    <div class="header-title">Calendário</div>
     <div class="header-month" id="headerMonth"></div>
   </div>
   <div class="nav-btns">
@@ -494,37 +353,34 @@
   <button class="tab active" data-tab="scroll">Agenda</button>
   <button class="tab" data-tab="grid">Mês</button>
 </div>
-<div id="loadingBar" style="height:2px;background:var(--text);opacity:0;transition:opacity 0.2s;margin:0;"></div>
+<div id="loadingBar"></div>
 
 <div class="content">
   <div id="scrollView" class="scroll-view"></div>
-  <div id="gridView" class="grid-view hidden"></div>
+  <div id="gridView"  class="grid-view hidden"></div>
 </div>
 
-<!-- MODAL -->
+<!-- MODAL — usado apenas na aba Mês -->
 <div class="modal-overlay" id="modalOverlay">
-  <div class="modal" id="modal">
+  <div class="modal">
     <div class="modal-handle"></div>
     <div class="modal-header">
       <span class="modal-date-big" id="modalDateBig"></span>
       <span class="modal-date-sub" id="modalDateSub"></span>
       <button class="modal-close" id="modalClose">&#x2715;</button>
     </div>
-    <div id="modalEntriesSection"></div>
-    <div class="modal-sep"></div>
-    <div class="modal-section-label">Novo evento</div>
-    <div class="modal-form">
-      <div class="modal-input-group">
-        <input type="time" class="modal-time-input" id="inputTime" placeholder="Hora">
-        <textarea class="modal-text-input" id="inputText" placeholder="Escreva aqui..." rows="1"></textarea>
-      </div>
-      <button class="modal-add-btn" id="addBtn">Adicionar</button>
+    <div class="modal-notepad">
+      <div class="modal-notepad-label">Notas do dia</div>
+      <textarea class="modal-textarea" id="modalTextarea" placeholder="Escreva aqui..."></textarea>
+    </div>
+    <div class="modal-save-row">
+      <span class="modal-saving-hint" id="modalSavingHint"></span>
+      <button class="modal-save-btn" id="modalSaveBtn">Salvar</button>
     </div>
   </div>
 </div>
 
 <script>
-  // ---- SUPABASE CONFIG ----
   const SUPABASE_URL = 'https://gkxpotnhfwowyqesqvxa.supabase.co';
   const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdreHBvdG5oZndvd3lxZXNxdnhhIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUxNTc5MTEsImV4cCI6MjA5MDczMzkxMX0.7Ahxax54XakWviCiT2fBgKyuhskP3qTLc2lsOQNEGoE';
 
@@ -539,16 +395,15 @@
     ...opts
   });
 
-  // ---- STATE ----
   const today = new Date();
-  let currentYear = today.getFullYear();
+  let currentYear  = today.getFullYear();
   let currentMonth = today.getMonth();
   let selectedDate = null;
-  let entries = {}; // { "YYYY-MM-DD": [{id, time, text}, ...] }
-  let loading = false;
+  let notes = {}; // { "YYYY-MM-DD": { id, text } }
+  const saveTimers = {};
 
   const MONTHS_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-  const DAYS_PT = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+  const DAYS_PT   = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
   const DAYS_FULL = ['domingo','segunda','terça','quarta','quinta','sexta','sábado'];
 
   function toKey(y, m, d) {
@@ -558,64 +413,57 @@
     return y === today.getFullYear() && m === today.getMonth() && d === today.getDate();
   }
   function escHtml(s) {
-    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+  function showLoading(on) {
+    document.getElementById('loadingBar').style.opacity = on ? '1' : '0';
   }
 
-  // ---- SUPABASE CRUD ----
+  // ---- SUPABASE ----
   async function loadMonth(year, month) {
     const from = toKey(year, month, 1);
     const to   = toKey(year, month, new Date(year, month + 1, 0).getDate());
     showLoading(true);
     try {
-      const res = await api(`events?date=gte.${from}&date=lte.${to}&order=time.asc.nullslast,created_at.asc`);
+      const res  = await api(`events?date=gte.${from}&date=lte.${to}&order=created_at.desc`);
       const rows = await res.json();
-      // rebuild entries map for this month
-      Object.keys(entries).forEach(k => { if (k >= from && k <= to) delete entries[k]; });
+      Object.keys(notes).forEach(k => { if (k >= from && k <= to) delete notes[k]; });
       rows.forEach(row => {
-        if (!entries[row.date]) entries[row.date] = [];
-        entries[row.date].push({ id: row.id, time: row.time || '', text: row.text });
+        if (!notes[row.date]) notes[row.date] = { id: row.id, text: row.text };
       });
     } catch(e) { console.error(e); }
     showLoading(false);
     render();
   }
 
-  async function addEntryDB(date, time, text) {
-    const res = await api('events', {
-      method: 'POST',
-      body: JSON.stringify({ date, time: time || null, text }),
-      prefer: 'return=representation'
-    });
-    const rows = await res.json();
-    const row = rows[0];
-    if (!entries[date]) entries[date] = [];
-    entries[date].push({ id: row.id, time: row.time || '', text: row.text });
-    entries[date].sort((a, b) => {
-      if (!a.time && !b.time) return 0;
-      if (!a.time) return 1;
-      if (!b.time) return -1;
-      return a.time.localeCompare(b.time);
-    });
+  async function saveNote(date, text) {
+    const existing = notes[date];
+    if (!text.trim()) {
+      if (existing) {
+        await api(`events?id=eq.${existing.id}`, { method: 'DELETE', prefer: 'return=minimal' });
+        delete notes[date];
+      }
+      return;
+    }
+    if (existing) {
+      await api(`events?id=eq.${existing.id}`, {
+        method: 'PATCH',
+        body: JSON.stringify({ text }),
+        prefer: 'return=minimal'
+      });
+      notes[date].text = text;
+    } else {
+      const res  = await api('events', { method: 'POST', body: JSON.stringify({ date, text, time: null }) });
+      const rows = await res.json();
+      if (rows[0]) notes[date] = { id: rows[0].id, text };
+    }
   }
 
-  async function deleteEntryDB(id, date, idx) {
-    await api(`events?id=eq.${id}`, { method: 'DELETE', prefer: 'return=minimal' });
-    entries[date].splice(idx, 1);
-    if (entries[date].length === 0) delete entries[date];
-  }
-
-  // ---- LOADING STATE ----
-  function showLoading(on) {
-    loading = on;
-    document.getElementById('loadingBar').style.opacity = on ? '1' : '0';
-  }
-
-  // ---- HEADER ----
+  // ---- HEADER / TABS / NAV ----
   function updateHeader() {
     document.getElementById('headerMonth').textContent = `${MONTHS_PT[currentMonth]} ${currentYear}`;
   }
 
-  // ---- TABS ----
   document.querySelectorAll('.tab').forEach(tab => {
     tab.addEventListener('click', () => {
       document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -627,93 +475,120 @@
     });
   });
 
-  // ---- NAV ----
   document.getElementById('prevBtn').addEventListener('click', () => {
     currentMonth--;
     if (currentMonth < 0) { currentMonth = 11; currentYear--; }
-    updateHeader();
-    loadMonth(currentYear, currentMonth);
+    updateHeader(); loadMonth(currentYear, currentMonth);
   });
   document.getElementById('nextBtn').addEventListener('click', () => {
     currentMonth++;
     if (currentMonth > 11) { currentMonth = 0; currentYear++; }
-    updateHeader();
-    loadMonth(currentYear, currentMonth);
+    updateHeader(); loadMonth(currentYear, currentMonth);
   });
 
-  // ---- RENDER ----
   function render() {
-    const activeTab = document.querySelector('.tab.active').dataset.tab;
-    if (activeTab === 'scroll') renderScroll();
+    const active = document.querySelector('.tab.active').dataset.tab;
+    if (active === 'scroll') renderScroll();
     else renderGrid();
   }
 
+  // ---- AGENDA: blocos de notas inline ----
   function renderScroll() {
-    const container = document.getElementById('scrollView');
+    const container   = document.getElementById('scrollView');
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    const isCurrentMonth = currentYear === today.getFullYear() && currentMonth === today.getMonth();
-    const startDay = isCurrentMonth ? today.getDate() : 1;
+    const isCurMonth  = currentYear === today.getFullYear() && currentMonth === today.getMonth();
+    const startDay    = isCurMonth ? today.getDate() : 1;
+
+    // preserve live text before re-render
+    const live = {};
+    container.querySelectorAll('.day-textarea').forEach(ta => { live[ta.dataset.key] = ta.value; });
+
     let html = '';
     for (let d = startDay; d <= daysInMonth; d++) {
-      const key = toKey(currentYear, currentMonth, d);
-      const dayEntries = entries[key] || [];
-      const dow = new Date(currentYear, currentMonth, d).getDay();
-      const isT = isToday(currentYear, currentMonth, d);
-      const hasE = dayEntries.length > 0;
-      html += `<div class="scroll-day${isT?' today':''}${hasE?' has-entry':''}" data-key="${key}">`;
-      html += `<div class="scroll-day-header">`;
-      html += `<span class="scroll-day-num">${d}</span>`;
-      html += `<span class="scroll-day-name">${DAYS_FULL[dow]}</span>`;
-      html += `</div>`;
-      if (hasE) {
-        html += `<div class="scroll-day-entries">`;
-        dayEntries.forEach(e => {
-          html += `<div class="entry-pill">`;
-          if (e.time) html += `<span class="entry-time">${e.time}</span>`;
-          html += `<span class="entry-text">${escHtml(e.text)}</span>`;
-          html += `</div>`;
-        });
-        html += `</div>`;
-      }
+      const key    = toKey(currentYear, currentMonth, d);
+      const dow    = new Date(currentYear, currentMonth, d).getDay();
+      const isT    = isToday(currentYear, currentMonth, d);
+      const stored = notes[key] ? escHtml(notes[key].text) : '';
+      html += `<div class="day-block${isT ? ' today' : ''}" data-key="${key}">`;
+      html += `<div class="day-block-header"><span class="day-num">${d}</span><span class="day-name">${DAYS_FULL[dow]}</span></div>`;
+      html += `<textarea class="day-textarea" data-key="${key}" placeholder="Escreva aqui...">${stored}</textarea>`;
+      html += `<div class="day-saving" id="saving-${key}"></div>`;
       html += `</div>`;
     }
     container.innerHTML = html;
-    container.querySelectorAll('.scroll-day').forEach(el => {
-      el.addEventListener('click', () => openModal(el.dataset.key));
+
+    container.querySelectorAll('.day-textarea').forEach(ta => {
+      const k = ta.dataset.key;
+      // restore live value if user was typing
+      if (live[k] !== undefined && live[k] !== ta.value) ta.value = live[k];
+      autoResize(ta);
+
+      ta.addEventListener('input', () => {
+        autoResize(ta);
+        triggerSave(k, ta.value);
+      });
+      ta.addEventListener('focus', () => ta.closest('.day-block').classList.add('focused'));
+      ta.addEventListener('blur',  () => ta.closest('.day-block').classList.remove('focused'));
     });
   }
 
+  function autoResize(ta) {
+    ta.style.height = 'auto';
+    ta.style.height = Math.max(ta.scrollHeight, 56) + 'px';
+  }
+
+  function triggerSave(key, text) {
+    const hint = document.getElementById(`saving-${key}`);
+    if (hint) hint.textContent = '';
+    clearTimeout(saveTimers[key]);
+    saveTimers[key] = setTimeout(async () => {
+      try {
+        if (hint) hint.textContent = 'salvando...';
+        await saveNote(key, text);
+        if (hint) {
+          hint.textContent = 'salvo';
+          setTimeout(() => { if (hint) hint.textContent = ''; }, 1400);
+        }
+        // atualiza ponto no grid sem re-render completo
+        const gd = document.querySelector(`.grid-day[data-key="${key}"]`);
+        if (gd) gd.classList.toggle('has-entry', !!text.trim());
+      } catch(e) {
+        if (hint) hint.textContent = 'erro ao salvar';
+      }
+    }, 900);
+  }
+
+  // ---- GRID ----
   function renderGrid() {
-    const container = document.getElementById('gridView');
-    const firstDay = new Date(currentYear, currentMonth, 1).getDay();
+    const container   = document.getElementById('gridView');
+    const firstDay    = new Date(currentYear, currentMonth, 1).getDay();
     const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
-    const prevDays = new Date(currentYear, currentMonth, 0).getDate();
+    const prevDays    = new Date(currentYear, currentMonth, 0).getDate();
+
     let html = '<div class="weekdays">';
     DAYS_PT.forEach(d => { html += `<div class="weekday-label">${d}</div>`; });
     html += '</div><div class="grid-days">';
+
     for (let i = firstDay - 1; i >= 0; i--) {
       const d = prevDays - i;
       const pm = currentMonth - 1 < 0 ? 11 : currentMonth - 1;
       const py = currentMonth - 1 < 0 ? currentYear - 1 : currentYear;
       const key = toKey(py, pm, d);
-      const hasE = (entries[key]||[]).length > 0;
-      html += `<div class="grid-day other-month${hasE?' has-entry':''}" data-key="${key}"><span class="grid-day-num">${d}</span><div class="grid-dot"></div></div>`;
+      html += `<div class="grid-day other-month${notes[key]?' has-entry':''}" data-key="${key}"><span class="grid-day-num">${d}</span><div class="grid-dot"></div></div>`;
     }
     for (let d = 1; d <= daysInMonth; d++) {
       const key = toKey(currentYear, currentMonth, d);
       const isT = isToday(currentYear, currentMonth, d);
-      const hasE = (entries[key]||[]).length > 0;
-      html += `<div class="grid-day${isT?' today':''}${hasE?' has-entry':''}" data-key="${key}"><span class="grid-day-num">${d}</span><div class="grid-dot"></div></div>`;
+      html += `<div class="grid-day${isT?' today':''}${notes[key]?' has-entry':''}" data-key="${key}"><span class="grid-day-num">${d}</span><div class="grid-dot"></div></div>`;
     }
-    const totalCells = Math.ceil((firstDay + daysInMonth) / 7) * 7;
-    let nextD = 1;
-    for (let i = firstDay + daysInMonth; i < totalCells; i++) {
+    const total = Math.ceil((firstDay + daysInMonth) / 7) * 7;
+    let nxt = 1;
+    for (let i = firstDay + daysInMonth; i < total; i++) {
       const nm = currentMonth + 1 > 11 ? 0 : currentMonth + 1;
       const ny = currentMonth + 1 > 11 ? currentYear + 1 : currentYear;
-      const key = toKey(ny, nm, nextD);
-      const hasE = (entries[key]||[]).length > 0;
-      html += `<div class="grid-day other-month${hasE?' has-entry':''}" data-key="${key}"><span class="grid-day-num">${nextD}</span><div class="grid-dot"></div></div>`;
-      nextD++;
+      const key = toKey(ny, nm, nxt);
+      html += `<div class="grid-day other-month${notes[key]?' has-entry':''}" data-key="${key}"><span class="grid-day-num">${nxt}</span><div class="grid-dot"></div></div>`;
+      nxt++;
     }
     html += '</div>';
     container.innerHTML = html;
@@ -727,40 +602,14 @@
     selectedDate = key;
     const [y, m, d] = key.split('-').map(Number);
     const dow = new Date(y, m - 1, d).getDay();
-    document.getElementById('modalDateBig').textContent = `${d} de ${MONTHS_PT[m-1]}`;
-    document.getElementById('modalDateSub').textContent = `${DAYS_FULL[dow]}, ${y}`;
-    renderModalEntries();
-    document.getElementById('inputTime').value = '';
-    document.getElementById('inputText').value = '';
+    document.getElementById('modalDateBig').textContent   = `${d} de ${MONTHS_PT[m-1]}`;
+    document.getElementById('modalDateSub').textContent   = `${DAYS_FULL[dow]}, ${y}`;
+    document.getElementById('modalTextarea').value        = notes[key] ? notes[key].text : '';
+    document.getElementById('modalSavingHint').textContent = '';
+    document.getElementById('modalSaveBtn').disabled = false;
+    document.getElementById('modalSaveBtn').textContent = 'Salvar';
     document.getElementById('modalOverlay').classList.add('open');
-    setTimeout(() => document.getElementById('inputText').focus(), 200);
-  }
-
-  function renderModalEntries() {
-    const key = selectedDate;
-    const dayEntries = entries[key] || [];
-    const sec = document.getElementById('modalEntriesSection');
-    if (dayEntries.length === 0) { sec.innerHTML = ''; return; }
-    let html = '<div class="modal-section-label">Eventos</div><div class="modal-entries">';
-    dayEntries.forEach((e, i) => {
-      html += `<div class="modal-entry-item">`;
-      if (e.time) html += `<span class="modal-entry-time">${e.time}</span>`;
-      html += `<span class="modal-entry-text">${escHtml(e.text)}</span>`;
-      html += `<button class="modal-entry-del" data-id="${e.id}" data-idx="${i}">&#x2715;</button>`;
-      html += `</div>`;
-    });
-    html += '</div>';
-    sec.innerHTML = html;
-    sec.querySelectorAll('.modal-entry-del').forEach(btn => {
-      btn.addEventListener('click', async (ev) => {
-        ev.stopPropagation();
-        btn.disabled = true;
-        btn.style.opacity = '0.3';
-        await deleteEntryDB(btn.dataset.id, selectedDate, parseInt(btn.dataset.idx));
-        renderModalEntries();
-        render();
-      });
-    });
+    setTimeout(() => document.getElementById('modalTextarea').focus(), 200);
   }
 
   function closeModal() {
@@ -769,38 +618,29 @@
   }
 
   document.getElementById('modalClose').addEventListener('click', closeModal);
-  document.getElementById('modalOverlay').addEventListener('click', (e) => {
+  document.getElementById('modalOverlay').addEventListener('click', e => {
     if (e.target === document.getElementById('modalOverlay')) closeModal();
   });
 
-  document.getElementById('addBtn').addEventListener('click', doAdd);
-  document.getElementById('inputText').addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); doAdd(); }
+  document.getElementById('modalSaveBtn').addEventListener('click', async () => {
+    const text = document.getElementById('modalTextarea').value;
+    const btn  = document.getElementById('modalSaveBtn');
+    const hint = document.getElementById('modalSavingHint');
+    btn.disabled = true; btn.textContent = '...';
+    hint.textContent = 'salvando...';
+    try {
+      await saveNote(selectedDate, text);
+      hint.textContent = 'salvo';
+      render();
+      setTimeout(closeModal, 500);
+    } catch(e) {
+      hint.textContent = 'erro ao salvar';
+      btn.disabled = false; btn.textContent = 'Salvar';
+    }
   });
 
-  async function doAdd() {
-    const time = document.getElementById('inputTime').value.trim();
-    const text = document.getElementById('inputText').value.trim();
-    if (!text) return;
-    const btn = document.getElementById('addBtn');
-    btn.disabled = true;
-    btn.textContent = '...';
-    try {
-      await addEntryDB(selectedDate, time, text);
-      renderModalEntries();
-      render();
-      document.getElementById('inputTime').value = '';
-      document.getElementById('inputText').value = '';
-      document.getElementById('inputText').focus();
-    } catch(e) { alert('Erro ao salvar. Tente novamente.'); }
-    btn.disabled = false;
-    btn.textContent = 'Adicionar';
-  }
-
-  // ---- REALTIME (polling a cada 15s) ----
-  setInterval(() => {
-    loadMonth(currentYear, currentMonth);
-  }, 15000);
+  // ---- POLLING ----
+  setInterval(() => loadMonth(currentYear, currentMonth), 20000);
 
   // ---- INIT ----
   updateHeader();
